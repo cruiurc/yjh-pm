@@ -9,7 +9,10 @@ Welcome to yjh-pm's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+   :glob:
 
+
+   report/*
 
 
 Indices and tables
