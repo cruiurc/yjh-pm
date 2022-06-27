@@ -7,13 +7,10 @@
 ==================================
 
 
-Indices and tables
-==================
-
-周报：
-
+周报:
+------
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :glob:
 
 
