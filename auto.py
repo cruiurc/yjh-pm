@@ -19,11 +19,11 @@ for file in os.listdir('./data/'):
         df_pert_relation = pd.read_excel('./data/'+product_name+'.xlsx', usecols=[4,5], sheet_name='PERT').dropna()
         df_summary = pd.read_excel('./data/'+product_name+'.xlsx', sheet_name='进展').dropna()
         df_note = pd.read_excel('./data/'+product_name+'.xlsx', sheet_name='备忘录').dropna()
-        df_plan = pd.read_excel('./data/'+product_name+'.xlsx', sheet_name='进度计划表').dropna()
-        df_track = pd.read_excel('./data/'+product_name+'.xlsx', sheet_name='进度跟踪表').dropna()
+        df_plan = pd.read_excel('./data/'+product_name+'.xlsx', sheet_name='进度计划表').fillna(' ')
+        df_track = pd.read_excel('./data/'+product_name+'.xlsx', sheet_name='进度跟踪表').fillna(' ')
         df_hr = pd.read_excel('./data/'+product_name+'.xlsx', sheet_name='人力资源表')
         df_cost = pd.read_excel('./data/'+product_name+'.xlsx', sheet_name='材料费用表')
-        df_budget = pd.read_excel('./data/'+product_name+'.xlsx', sheet_name='产品成本表').dropna()
+        df_budget = pd.read_excel('./data/'+product_name+'.xlsx', sheet_name='产品成本表')
 
 
         # 输出.rst文本
@@ -62,7 +62,7 @@ for file in os.listdir('./data/'):
                 if df_summary.loc[i, '更新时间'] >= (dt.date.today() - dt.timedelta(days=7)):
                     title = df_summary.loc[i, '标题']
                     summary = df_summary.loc[i, '进展报告']
-                    f.write(':'+title+':\n   '+summary+'\n')
+                    f.write(':'+title+':\n   '+summary+'\n\n')
             f.write('\n')
             f.write('决议、备忘录\n')
             f.write('----------------\n\n')
@@ -71,36 +71,28 @@ for file in os.listdir('./data/'):
                     note = df_note.loc[i, '备忘录']
                     f.write('- '+note+'\n\n')
             f.write('\n')
-            f.write('人力资源\n')
-            f.write('----------------\n\n')
-            f.write('.. figure:: '+'../_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-hr'+'.svg')
-            f.write('\n\n')
-            f.write('材料费用\n')
-            f.write('----------------\n\n')
-            f.write('.. figure:: '+'../_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-cost'+'.svg')            
-            f.write('\n\n')
-            f.write('产品成本\n')
-            f.write('----------------\n\n')
-            f.write('.. figure:: '+'../_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-budget'+'.svg')            
-            f.write('\n\n')
             f.write('风险\n')
             f.write('----------------\n\n')
-            f.write('.. list-table:: 风险跟踪表\n')
-            f.write('   :header-rows: 1\n')
-            f.write('   :widths: 4 15 15 15 25\n')
-            f.write('   :stub-columns: 1\n\n')
-            f.write('   *  -  风险级别\n      -  风险描述\n      -  风险影响\n      -  风险策略\n      -  关联工作包\n')
+#            f.write('.. list-table:: 风险跟踪表\n')
+#            f.write('   :header-rows: 1\n')
+#            f.write('   :widths: 4 15 15 15 25\n')
+#            f.write('   :stub-columns: 1\n\n')
+#            f.write('   *  -  风险级别\n      -  风险描述\n      -  风险影响\n      -  风险策略\n      -  关联工作包\n')
             for i in df_track.index:
                 if df_track.loc[i, '更新时间'] >= (dt.date.today() - dt.timedelta(days=7)):
-                    level = df_track.loc[i, '风险级别']
-                    risk = df_track.loc[i, '风险描述']
-                    effect = df_track.loc[i, '风险影响']
-                    solution = df_track.loc[i, '风险策略']
-                    wbs = str(df_track.loc[i, 'WBS'])
-                    workpkg = df_track.loc[i, '工作包名称']
-                    start = df_track.loc[i, '计划开始时间'].strftime('%Y-%m-%d')
-                    end = df_track.loc[i, '计划结束时间'].strftime('%Y-%m-%d')
-                    f.write('   *  -  '+level+'\n      -  '+risk+'\n      -  '+effect+'\n      -  '+solution+'\n      -  '+workpkg+'\n\n')
+                    if df_track.loc[i, '风险级别'] != ' ':
+                        level = df_track.loc[i, '风险级别']
+                        risk = df_track.loc[i, '风险描述']
+                        effect = df_track.loc[i, '风险影响']
+                        solution = df_track.loc[i, '风险策略']
+                        wbs = str(df_track.loc[i, 'WBS'])
+                        workpkg = df_track.loc[i, '工作包名称']
+                        start = df_track.loc[i, '计划开始时间'].strftime('%Y-%m-%d')
+                        end = df_track.loc[i, '计划结束时间'].strftime('%Y-%m-%d')
+                        f.write(':级别:\n   '+level+'\n:风险:\n   '+risk+'\n:影响:\n   '+effect+'\n:策略:\n   '+solution+'\n:关联工作包:\n   '+wbs+'|'+workpkg+'|'+start+' - '+end+'\n\n')
+                        f.write('----\n\n')
+#            f.write('   *  -  '+level+'\n      -  '+risk+'\n      -  '+effect+'\n      -  '+solution+'\n      -  '+workpkg+'\n\n')
+
             f.write('下一步计划\n')
             f.write('----------------\n\n')
             f.write('.. list-table:: 下一步计划表\n')
@@ -110,52 +102,125 @@ for file in os.listdir('./data/'):
             f.write('   *  -  WBS\n      -  工作包名称\n      -  计划开始时间\n      -  计划结束时间\n')
             for i in df_plan.index:
                 if df_plan.loc[i, '计划开始时间'] <= (dt.date.today() + dt.timedelta(days=7)):
-                    wbs = str(df_plan.loc[i, 'WBS'])
-                    workpkg = df_plan.loc[i, '工作包名称']
-                    start = df_plan.loc[i, '计划开始时间'].strftime('%Y-%m-%d')
-                    end = df_plan.loc[i, '计划结束时间'].strftime('%Y-%m-%d')
-                    f.write('   *  -  '+wbs+'\n      -  '+workpkg+'\n      -  '+start+'\n      -  '+end+'\n\n')
+                    if df_plan.loc[i, '完成度'] < 1:
+                        wbs = str(df_plan.loc[i, 'WBS'])
+                        workpkg = df_plan.loc[i, '工作包名称']
+                        start = df_plan.loc[i, '计划开始时间'].strftime('%Y-%m-%d')
+                        end = df_plan.loc[i, '计划结束时间'].strftime('%Y-%m-%d')
+                        f.write('   *  -  '+wbs+'\n      -  '+workpkg+'\n      -  '+start+'\n      -  '+end+'\n\n')
             f.write('\n')
+
+
+
+            if df_hr.iloc[0, 0] != 'no':
+                f.write('人力资源\n')
+                f.write('----------------\n\n')
+                f.write('.. figure:: '+'../_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-hr-sum'+'.svg')
+                f.write('\n')
+                f.write('.. figure:: '+'../_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-hr-month'+'.svg')
+                f.write('\n\n')
+            if df_cost.iloc[0, 0] != 'no':
+                f.write('材料费用\n')
+                f.write('----------------\n\n')
+                f.write('.. figure:: '+'../_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-cost-sum'+'.svg')
+                f.write('\n')
+                f.write('.. figure:: '+'../_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-cost-month'+'.svg')
+                f.write('\n\n')
+            print(df_budget)
+            if df_budget.iloc[0, 0] != 'no':
+                f.write('产品成本\n')
+                f.write('----------------\n\n')
+                f.write('.. figure:: '+'../_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-budget'+'.svg')            
+                f.write('\n\n')
             f.close()
             # 输出chart
             # hr chart
-            hr_mon = df_hr['月'].tolist()
+            hr_mon = df_hr['月']
+#            hr_mon = list(map(int, hr_mon))
             hr_plan = df_hr['计划投入'].tolist()
             hr_actual = df_hr['实际投入'].tolist()
             hr_plan_sum = df_hr['计划投入总计'].tolist()
             hr_actual_sum = df_hr['实际投入总计'].tolist()            
 
-            fig = plt.figure()
-            ax1=fig.add_subplot(212)
-            ax1.plot(hr_mon, hr_plan_sum, label='cumulative plan')
-            ax1.plot(hr_mon, hr_actual_sum, label='cumulative actual')
-            ax1.legend()
+            fig, ax = plt.subplots(figsize=(5, 2), layout='constrained')
+            ax.plot(hr_mon, hr_plan_sum, label='plan_sum')  # Plot some data on the axes.
+            ax.plot(hr_mon, hr_actual_sum, label='actual_sum')  # Plot more data on the axes...
+            ax.set_xlabel('month')  # Add an x-label to the axes.
+            ax.set_ylabel('person * month')  # Add a y-label to the axes.
+            ax.set_title("Sum")  # Add a title to the axes.
+#            ax.set_xticklabels(x)
+            ax.legend();  # Add a legend.
+            plt.savefig('./source/_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-hr-sum'+'.svg')
             x = np.arange(len(hr_mon))
-            ax2=fig.add_subplot(211)
-            ax2.bar(x-.2, hr_plan, width=0.35, label='monthly plan')
-            ax2.bar(x+.2, hr_actual, width=0.35, label='monthly actual')
-            ax2.legend()
-            plt.savefig('./source/_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-hr'+'.svg')
-
+#           xpos = np.arange(0, 12)
+            fig, ax = plt.subplots(figsize=(5, 2), layout='constrained')
+            planbar = plt.bar(x-.2, hr_plan, align='center', width=0.35, label='plan')
+            actualbar = plt.bar(x+.2, hr_actual, align='center', width=0.35, label='actual')
+            ax.set_xticks(x)
+#            ax.set_xticklabels(hr_mon)
+            ax.set_xlabel('month')  # Add an x-label to the axes.
+            ax.set_ylabel('person * month')  # Add a y-label to the axes.
+            ax.set_title("Monthly")  # Add a title to the axes.
+            ax.set_xticklabels(x)
+            ax.legend()
+            plt.savefig('./source/_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-hr-month'+'.svg')
+# 
+#             fig = plt.figure()
+#             ax1=fig.add_subplot(212)
+#             hr_plan_sum = ax1.plot(hr_mon, hr_plan_sum, label='cumulative plan')
+#             hr_actual_sum = ax1.plot(hr_mon, hr_actual_sum, label='cumulative actual')
+#             ax1.legend()
+#             x = np.arange(len(hr_mon))
+#             ax2=fig.add_subplot(211)
+#             ax2.bar(x-.4, hr_plan, width=0.4, label='monthly plan', tick_label=hr_mon)
+#             ax2.bar(x, hr_actual, width=0.4, label='monthly actual', tick_label=hr_mon)
+#             ax2.legend()
+#             plt.savefig('./source/_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-hr'+'.svg')
+# 
             # cost chart
             cost_mon = df_cost['月'].tolist()
+#            cost_mon = list(map(int, cost_mon))
             cost_plan = df_cost['计划费用'].tolist()
             cost_actual = df_cost['实际费用'].tolist()
             cost_plan_sum = df_cost['计划费用总计'].tolist()
             cost_actual_sum = df_cost['实际费用总计'].tolist()            
 
-            fig = plt.figure()
-            ax1=fig.add_subplot(212)
-            ax1.plot(cost_mon, cost_plan_sum, label='cumulative plan')
-            ax1.plot(cost_mon, cost_actual_sum, label='cumulative actual')
-            ax1.legend()
+            fig, ax = plt.subplots(figsize=(5, 2), layout='constrained')
+            ax.plot(cost_mon, cost_plan_sum, label='plan_sum')  # Plot some data on the axes.
+            ax.plot(cost_mon, cost_actual_sum, label='actual_sum')  # Plot more data on the axes...
+            ax.set_xlabel('month')  # Add an x-label to the axes.
+#            ax.set_ylabel('')  # Add a y-label to the axes.
+            ax.set_title("Sum")  # Add a title to the axes.
+#            ax.set_xticklabels(cost_mon)
+            ax.legend();  # Add a legend.
+            plt.savefig('./source/_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-cost-sum'+'.svg')
             x = np.arange(len(cost_mon))
-            ax2=fig.add_subplot(211)
-            ax2.bar(x-.2, cost_plan, width=0.35, label='monthly plan')
-            ax2.bar(x+.2, cost_actual, width=0.35, label='monthly actual')
-            ax2.legend()
-            plt.savefig('./source/_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-cost'+'.svg')
+#           xpos = np.arange(0, 12)
+            fig, ax = plt.subplots(figsize=(5, 2), layout='constrained')
+            planbar = plt.bar(x-.2, cost_plan, align='center', width=0.35, label='plan')
+            actualbar = plt.bar(x+.2, cost_actual, align='center', width=0.35, label='actual')
+            ax.set_xticks(x)
+            ax.set_xticklabels(x)
+            ax.set_xlabel('month')  # Add an x-label to the axes.
+            ax.set_ylabel('person * month')  # Add a y-label to the axes.
+            ax.set_title("Monthly")  # Add a title to the axes.
+            ax.legend()
+            plt.savefig('./source/_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-cost-month'+'.svg')
+# 
 
+
+#            fig = plt.figure()
+#            ax1=fig.add_subplot(212)
+#            ax1.plot(cost_mon, cost_plan_sum, label='cumulative plan')
+#            ax1.plot(cost_mon, cost_actual_sum, label='cumulative actual')
+#            ax1.legend()
+#            x = np.arange(len(cost_mon))
+#            ax2=fig.add_subplot(211)
+#            ax2.bar(x-.2, cost_plan, width=0.4, label='monthly plan', tick_label=cost_mon)
+#            ax2.bar(x+.2, cost_actual, width=0.4, label='monthly actual', tick_label=cost_mon)
+#            ax2.legend()
+#            plt.savefig('./source/_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-cost'+'.svg')
+#
             # budget chart
             plan = df_budget['计划产品成本'].tolist()
             actual = df_budget['实际产品成本'].tolist()
@@ -167,4 +232,5 @@ for file in os.listdir('./data/'):
             ax.plot(date, actual, label='actual', marker = 'o')
             ax.legend()
             plt.savefig('./source/_static/'+dt.date.today().strftime('%Y-%m-%d')+'-'+product_name+'-budget'+'.svg')
-            
+
+
